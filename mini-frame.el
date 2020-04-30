@@ -391,7 +391,9 @@ ALIST is passed to `window--display-buffer'."
   (cond
    ((or mini-frame-ignore-this
         (not (display-graphic-p))
-        (minibufferp)
+        (and (minibufferp)
+             (or (not (frame-live-p mini-frame-frame))
+                 (not (frame-visible-p mini-frame-frame))))
         isearch-mode
         (and (symbolp this-command)
              (catch 'ignored
