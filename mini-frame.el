@@ -214,7 +214,7 @@ This function used as value for `resize-mini-frames' variable."
            mini-frame-resize-max-height
            (if (eq mini-frame-resize 'grow-only)
                (max (frame-parameter frame 'height)
-                    mini-frame-resize-min-height)
+                    (or mini-frame-resize-min-height 0))
              mini-frame-resize-min-height)
            ;; A max-width must be included to work around a bug in Emacs which
            ;; causes wrapping to not be taken into account in some situations
