@@ -63,6 +63,7 @@
 ;; turn `mini-frame-mode` off if something goes wrong (I hope not) :)
 
 ;;; Code:
+(require 'cl-lib)
 
 (defgroup mini-frame nil
   "Show minibuffer in child frame."
@@ -403,17 +404,13 @@ ALIST is passed to `window--display-buffer'."
                          (eq ignored-command this-command))
                    (throw 'ignored t))))))
     (apply fn args))
-   ((and (frame-live-p mini-frame-frame)
-         (or mini-frame-standalone
-             (frame-parameter mini-frame-frame 'parent-frame))
-         (frame-visible-p mini-frame-frame))
-    (mini-frame--display fn args))
    (t
     ;; On windows `frame-visible-p' can be t even if the frame is not visible so
     ;; calling `make-frame-visible' doesn't make frame actually visible.  Make frame
     ;; invisible one more time.
     (when (and (frame-live-p mini-frame-frame)
-               (frame-visible-p mini-frame-frame))
+               (frame-visible-p mini-frame-frame)
+               (= (recursion-depth) 0))
       (make-frame-invisible mini-frame-frame))
     (let ((after-make-frame-functions nil)
           (resize-mini-frames (if (eq mini-frame-resize 'not-set)
@@ -442,14 +439,26 @@ ALIST is passed to `window--display-buffer'."
         (save-window-excursion
           (unwind-protect
               (mini-frame--display fn args)
-            (when (frame-live-p mini-frame-completions-frame)
-              (make-frame-invisible mini-frame-completions-frame))
-            (when (frame-live-p mini-frame-selected-frame)
-              (select-frame-set-input-focus mini-frame-selected-frame))
-            (when (frame-live-p mini-frame-frame)
-              (make-frame-invisible mini-frame-frame)
-              (when mini-frame-detach-on-hide
-                (modify-frame-parameters mini-frame-frame '((parent-frame . nil))))))))))))
+            (when (= (recursion-depth) 0)
+              (when (frame-live-p mini-frame-completions-frame)
+                (make-frame-invisible mini-frame-completions-frame))
+              (if-let (fr (or (when mini-frame-standalone
+                                   (frame-live-p mini-frame-selected-frame))
+                              (frame-parameter mini-frame-frame 'parent-frame)
+                              ;; trying to find an alternate frame to return the focus
+                              (cl-find-if-not
+                               (lambda (fr)
+                                 (or (equal fr mini-frame-completions-frame)
+                                     (equal fr mini-frame-frame)
+                                     (frame-parameter fr 'parent-frame)))
+                               (frame-list))))
+                  (select-frame-set-input-focus fr))
+              (when (frame-live-p mini-frame-selected-frame)
+                (select-frame-set-input-focus mini-frame-selected-frame))
+              (when (frame-live-p mini-frame-frame)
+                (make-frame-invisible mini-frame-frame)
+                (when mini-frame-detach-on-hide
+                  (modify-frame-parameters mini-frame-frame '((parent-frame . nil)))))))))))))
 
 (defun mini-frame--advice (funcs func &optional remove)
   "Add advice FUNC around FUNCS.  If REMOVE, remove advice instead."
