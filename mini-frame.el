@@ -410,7 +410,7 @@ ALIST is passed to `window--display-buffer'."
     ;; invisible one more time.
     (when (and (frame-live-p mini-frame-frame)
                (frame-visible-p mini-frame-frame)
-               (= (recursion-depth) 0))
+               (= (minibuffer-depth) 0))
       (make-frame-invisible mini-frame-frame))
     (let ((after-make-frame-functions nil)
           (resize-mini-frames (if (eq mini-frame-resize 'not-set)
@@ -439,7 +439,7 @@ ALIST is passed to `window--display-buffer'."
         (save-window-excursion
           (unwind-protect
               (mini-frame--display fn args)
-            (when (= (recursion-depth) 0)
+            (when (= (minibuffer-depth) 0)
               (when (frame-live-p mini-frame-completions-frame)
                 (make-frame-invisible mini-frame-completions-frame))
               (if-let (fr (or (when mini-frame-standalone
