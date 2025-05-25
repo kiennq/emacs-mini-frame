@@ -274,6 +274,8 @@ This function used as value for `resize-mini-frames' variable."
                                      (keep-ratio . t)
                                      (undecorated . t)
                                      (desktop-dont-save . t)
+                                     (no-special-glyphs . t)
+                                     (skip-taskbar . t)
                                      (child-frame-border-width . 3)
                                      (internal-border-width . 3)
                                      (drag-internal-border . t)
