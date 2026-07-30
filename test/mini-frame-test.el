@@ -9,6 +9,7 @@
   (let ((mini-frame-resize 'grow-only)
         (mini-frame-resize-min-height nil)
         (mini-frame-resize-max-height nil)
+        (mini-frame-frame 'frame)
         (mini-frame-completions-frame nil)
         min-height)
     (cl-letf (((symbol-function 'frame-root-window)
@@ -29,6 +30,9 @@
              (lambda (_frame _max-height height &rest _args)
                (setq min-height height))))
         (mini-frame--resize-mini-frame 'frame)))
-    (should (= min-height 2.25))))
+    (should (= min-height 2.25))
+    (setq min-height nil)
+    (mini-frame--resize-mini-frame 'other-frame)
+    (should-not min-height)))
 
 ;;; mini-frame-test.el ends here

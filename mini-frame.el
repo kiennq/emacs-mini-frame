@@ -214,30 +214,31 @@ This allow to avoid mini-frame recreation in case its parent frame were deleted.
 (defun mini-frame--resize-mini-frame (frame)
   "Resize FRAME vertically only.
 This function used as value for `resize-mini-frames' variable."
-  (let ((window (frame-root-window frame)))
-    (funcall mini-frame--fit-frame-function
-             frame
-             mini-frame-resize-max-height
-             (if (eq mini-frame-resize 'grow-only)
-                 (max (/ (window-body-height window t)
-                         (float (window-default-line-height window)))
-                      (or mini-frame-resize-min-height 0))
-               mini-frame-resize-min-height)
-             ;; A max-width must be included to work around a bug in Emacs which
-             ;; causes wrapping to not be taken into account in some situations
-             ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=56102
-             (window-body-width window)
-             nil
-             'vertically))
-  (when (and (frame-live-p mini-frame-completions-frame)
-             (frame-visible-p mini-frame-completions-frame))
-    (let ((show-parameters (if (functionp mini-frame-completions-show-parameters)
-                               (funcall mini-frame-completions-show-parameters)
-                             mini-frame-completions-show-parameters)))
-      (unless (alist-get 'top show-parameters)
-        (modify-frame-parameters
-         mini-frame-completions-frame
-         `((top . ,(funcall mini-frame-completions-top-function))))))))
+  (when (eq frame mini-frame-frame)
+    (let ((window (frame-root-window frame)))
+      (funcall mini-frame--fit-frame-function
+               frame
+               mini-frame-resize-max-height
+               (if (eq mini-frame-resize 'grow-only)
+                   (max (/ (window-body-height window t)
+                           (float (window-default-line-height window)))
+                        (or mini-frame-resize-min-height 0))
+                 mini-frame-resize-min-height)
+               ;; A max-width must be included to work around a bug in Emacs which
+               ;; causes wrapping to not be taken into account in some situations
+               ;; https://debbugs.gnu.org/cgi/bugreport.cgi?bug=56102
+               (window-body-width window)
+               nil
+               'vertically))
+    (when (and (frame-live-p mini-frame-completions-frame)
+               (frame-visible-p mini-frame-completions-frame))
+      (let ((show-parameters (if (functionp mini-frame-completions-show-parameters)
+                                 (funcall mini-frame-completions-show-parameters)
+                               mini-frame-completions-show-parameters)))
+        (unless (alist-get 'top show-parameters)
+          (modify-frame-parameters
+           mini-frame-completions-frame
+           `((top . ,(funcall mini-frame-completions-top-function)))))))))
 
 (defun mini-frame--hide-completions (&optional frame _force)
   "Hide completions FRAME."
@@ -468,7 +469,7 @@ ALIST is passed to `window--display-buffer'."
                 (if mini-frame-delete-on-hide
                     (delete-frame mini-frame-frame)
                   (when mini-frame-detach-on-hide
-                    (modify-frame-parameters mini-frame-frame '((parent-frame . nil)))))))))))))
+                    (modify-frame-parameters mini-frame-frame '((parent-frame . nil))))))))))))))
 
 (defun mini-frame--advice (funcs func &optional remove)
   "Add advice FUNC around FUNCS.  If REMOVE, remove advice instead."
